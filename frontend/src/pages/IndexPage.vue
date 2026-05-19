@@ -183,7 +183,7 @@ function handleCardClick(card) {
     return
   }
   if (card.id === 7 || card.title === '57 Notes') {
-    window.open('https://drive.google.com/drive/folders/dummy-link-57', '_blank')
+    window.open('https://drive.google.com/drive/folders/1ozsYTgRuS2Ut7jUsTOy7MPruCRRz7GJE', '_blank')
     return
   }
   if (card.id === 8 || card.title === '58 Notes') {
