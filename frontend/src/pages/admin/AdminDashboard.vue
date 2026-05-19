@@ -659,7 +659,7 @@ async function handleUpload() {
 
   try {
     // For Vercel production to Render backend
-    const backendUrl = 'https://campus-notes-backend-r41r.onrender.com/api/upload' 
+    const backendUrl = 'https://campus-notes-backend-abze.onrender.com/api/upload' 
 
     $q.notify({ message: 'Uploading to Google Drive... Please wait.', color: 'info', timeout: 0, position: 'top', icon: 'cloud_upload' })
 
