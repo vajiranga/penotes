@@ -77,7 +77,10 @@ function handleLogin() {
   setTimeout(() => {
     loading.value = false
     
-    const team = JSON.parse(localStorage.getItem('campus_team')) || []
+    const team = JSON.parse(localStorage.getItem('campus_team')) || [
+      { id: 1, name: 'Dr. Kasun Perera', username: 'kasun@admin.com', tag: 'Highly Recommended', order: 1, modules: 'Notes', subjects: 'PHY101', photo: 'https://cdn.quasar.dev/img/avatar2.jpg' },
+      { id: 2, name: 'Amali Fernando', username: 'amali@admin.com', tag: 'Top Contributor', order: 2, modules: 'Lab Reports', subjects: 'MAT201', photo: 'https://cdn.quasar.dev/img/avatar3.jpg' }
+    ]
     
     // Check if user exists. If they don't have a password (old default accounts), allow '123456'
     const user = team.find(t => t.username === username.value && 

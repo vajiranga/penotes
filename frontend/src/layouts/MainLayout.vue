@@ -108,7 +108,7 @@
     </q-page-container>
 
     <!-- Global Floating Action Buttons -->
-    <div class="fixed-bottom-right q-pa-lg" style="z-index: 1000;">
+    <div class="fixed-bottom-right q-pa-lg" style="z-index: 1000; bottom: 40px;">
       <div class="column q-gutter-y-sm">
         <!-- Admin Request Button -->
         <q-btn round color="red-7" icon="admin_panel_settings" @click="openWhatsApp('admin')">
@@ -120,6 +120,13 @@
         </q-btn>
       </div>
     </div>
+
+    <!-- Footer -->
+    <q-footer elevated class="bg-indigo-10 text-white text-center q-pa-sm">
+      <div class="text-subtitle2 font-weight-medium">
+        Developed by <span class="text-amber-4 text-weight-bold">Vajiranga</span> and <span class="text-amber-4 text-weight-bold">Kaweesh</span>
+      </div>
+    </q-footer>
 
   </q-layout>
 </template>
