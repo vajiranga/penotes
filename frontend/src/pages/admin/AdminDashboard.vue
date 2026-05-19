@@ -636,46 +636,69 @@ function deleteItem(type, id) {
   }
 }
 
-function handleUpload() {
-  if (!uploadFile.value && !uploadForm.value.driveLink) {
-    $q.notify({ color: 'negative', message: 'Please select a file to upload' })
+const uploading = ref(false)
+
+async function handleUpload() {
+  if (!uploadFile.value) {
+    $q.notify({ color: 'warning', message: 'Please select a file to upload.', position: 'top' })
     return
   }
   
-  let fileType = 'Unknown'
-  let fileName = ''
-  
-  if (uploadFile.value) {
-    fileName = uploadFile.value.name
-    const typeStr = uploadFile.value.type || ''
-    if (typeStr.includes('pdf') || fileName.endsWith('.pdf')) fileType = 'PDF'
-    else if (typeStr.includes('image') || fileName.endsWith('.jpg') || fileName.endsWith('.png')) fileType = 'Image'
-    else if (typeStr.includes('zip') || fileName.endsWith('.zip')) fileType = 'ZIP'
-    else if (typeStr.includes('word') || fileName.endsWith('.doc') || fileName.endsWith('.docx')) fileType = 'Document'
-    
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      myUploads.value.push({
-        id: Date.now(),
-        uploaderName: currentUser.value.name,
-        subject: uploadForm.value.subject,
-        module: uploadForm.value.module,
-        title: uploadForm.value.title || fileName,
-        type: fileType,
-        fileName: fileName,
-        fileData: e.target.result // Base64
-      })
-      resetUploadForm()
-    }
-    reader.readAsDataURL(uploadFile.value)
-  } else {
-    // Fallback if they were using old code logic
-    myUploads.value.push({
-      id: Date.now(),
-      uploaderName: currentUser.value.name,
-      ...uploadForm.value
+  uploading.value = true
+
+  // Auto detect type based on extension
+  const ext = uploadFile.value.name.split('.').pop().toLowerCase()
+  let fileType = 'Document'
+  if (ext === 'pdf') fileType = 'PDF'
+  else if (['jpg', 'jpeg', 'png'].includes(ext)) fileType = 'Image'
+  else if (['zip', 'rar'].includes(ext)) fileType = 'ZIP'
+
+  // Prepare form data for the backend API
+  const formData = new FormData()
+  formData.append('file', uploadFile.value)
+
+  try {
+    // For Vercel production to Render backend
+    const backendUrl = 'https://campus-notes-backend-r41r.onrender.com/api/upload' 
+
+    $q.notify({ message: 'Uploading to Google Drive... Please wait.', color: 'info', timeout: 0, position: 'top', icon: 'cloud_upload' })
+
+    const response = await fetch(backendUrl, {
+      method: 'POST',
+      body: formData
     })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Upload failed')
+    }
+
+    // Save metadata to localStorage
+    myUploads.value.unshift({
+      id: Date.now(),
+      title: uploadForm.value.title || uploadFile.value.name,
+      module: uploadForm.value.module,
+      subject: uploadForm.value.subject,
+      uploaderName: currentUser.value.name,
+      type: fileType,
+      fileName: uploadFile.value.name,
+      size: (uploadFile.value.size / 1024 / 1024).toFixed(2) + ' MB',
+      date: new Date().toLocaleDateString(),
+      driveLink: result.driveLink,
+      downloadLink: result.downloadLink,
+      driveId: result.folderUsed
+    })
+
+    $q.dismiss() // Dismiss loading notification
     resetUploadForm()
+
+  } catch (error) {
+    console.error('Upload error:', error)
+    $q.dismiss()
+    $q.notify({ color: 'negative', message: error.message, position: 'top' })
+  } finally {
+    uploading.value = false
   }
 }
 
