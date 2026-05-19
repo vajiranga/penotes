@@ -48,9 +48,10 @@
       v-model="leftDrawerOpen"
       show-if-above
       bordered
-      class="bg-white"
+      class="bg-white column justify-between"
       :width="260"
     >
+      <div>
       <div class="q-pa-md text-center bg-indigo-1">
         <q-avatar size="72px" class="q-mb-sm shadow-2 bg-indigo-9 text-white">
           <q-icon name="local_library" />
@@ -79,6 +80,13 @@
           </q-item-section>
           <q-item-section class="text-weight-medium">Favorites</q-item-section>
         </q-item>
+
+        <q-item clickable v-ripple active-class="bg-indigo-1 text-indigo-9" to="/team">
+          <q-item-section avatar>
+            <q-icon name="groups" />
+          </q-item-section>
+          <q-item-section class="text-weight-medium">About Admin Team</q-item-section>
+        </q-item>
         
         <q-item clickable v-ripple>
           <q-item-section avatar>
@@ -96,6 +104,12 @@
           <q-item-section class="text-weight-bold">Admin Portal</q-item-section>
         </q-item>
       </q-list>
+      </div>
+      
+      <!-- Drawer Footer -->
+      <div class="q-pa-md text-center text-grey-6 text-caption">
+        Developed by <br/><b class="text-indigo-9">Vajiranga</b> & <b class="text-indigo-9">Kaweesh</b>
+      </div>
     </q-drawer>
 
     <q-page-container>
@@ -120,13 +134,6 @@
         </q-btn>
       </div>
     </div>
-
-    <!-- Footer -->
-    <q-footer class="bg-transparent text-grey-7 text-center q-pb-sm" style="box-shadow: none;">
-      <div class="text-caption text-weight-medium">
-        Developed by <b>Vajiranga</b> & <b>Kaweesh</b>
-      </div>
-    </q-footer>
 
   </q-layout>
 </template>

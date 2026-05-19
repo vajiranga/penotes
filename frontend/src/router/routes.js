@@ -9,7 +9,8 @@ const routes = [
       { path: 'social-media', component: () => import('pages/SocialMediaPage.vue') },
       { path: 'lab-reports', component: () => import('pages/LabReportsPage.vue') },
       { path: 'past-papers', component: () => import('pages/PastPapersPage.vue') },
-      { path: 'about', component: () => import('pages/AboutUniversityPage.vue') }
+      { path: 'about', component: () => import('pages/AboutUniversityPage.vue') },
+      { path: 'team', component: () => import('pages/AboutTeamPage.vue') }
     ]
   },
   
