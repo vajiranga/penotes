@@ -406,7 +406,7 @@ const myUploads = ref(JSON.parse(localStorage.getItem('campus_uploads')) || [
 watch(notices, (newVal) => {
   try {
     localStorage.setItem('campus_notices', JSON.stringify(newVal))
-  } catch (err) {
+  } catch {
     newVal.pop()
     $q.notify({ color: 'negative', message: 'Storage Limit Exceeded! Notice image too large.', icon: 'error' })
   }
@@ -415,7 +415,7 @@ watch(notices, (newVal) => {
 watch(subjects, (newVal) => {
   try {
     localStorage.setItem('campus_subjects', JSON.stringify(newVal))
-  } catch (err) {
+  } catch {
     newVal.pop()
     $q.notify({ color: 'negative', message: 'Storage Limit Exceeded!', icon: 'error' })
   }
@@ -424,7 +424,7 @@ watch(subjects, (newVal) => {
 watch(team, (newVal) => {
   try {
     localStorage.setItem('campus_team', JSON.stringify(newVal))
-  } catch (err) {
+  } catch {
     newVal.pop()
     $q.notify({ color: 'negative', message: 'Storage Limit Exceeded! Contributor photo is too large.', icon: 'error' })
   }
