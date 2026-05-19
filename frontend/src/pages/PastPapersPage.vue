@@ -58,7 +58,11 @@
                     </q-item-section>
 
                     <q-item-section side>
-                      <q-btn outline rounded color="purple-7" icon="download" label="Get" size="sm" @click.stop="downloadFile(paper)" />
+                      <div class="row q-gutter-xs">
+                        <q-btn flat round color="purple" icon="visibility" size="sm" @click.stop="viewFile(paper)" tooltip="View" />
+                        <q-btn flat round color="green" icon="download" size="sm" @click.stop="downloadFile(paper)" tooltip="Download" />
+                        <q-btn flat round color="orange" icon="share" size="sm" @click.stop="shareFile(paper)" tooltip="Share" />
+                      </div>
                     </q-item-section>
                   </q-item>
                   
@@ -89,33 +93,64 @@ const loading = ref(true)
 const subjects = ref([])
 
 onMounted(() => {
-  // Simulate fetching data from backend
   setTimeout(() => {
-    subjects.value = [
-      {
-        id: 's1',
-        name: 'Physics 101 (Mechanics)',
-        papers: [
-          { id: 'p1', title: '2022 Final Exam Paper', type: 'pdf', date: 'Jan 10, 2023' },
-          { id: 'p2', title: '2023 Mid Term Paper', type: 'pdf', date: 'Jun 15, 2023' }
-        ]
-      },
-      {
-        id: 's2',
-        name: 'Applied Mathematics',
-        papers: [
-          { id: 'p3', title: '2024 Model Paper', type: 'pdf', date: 'Mar 01, 2025' }
-        ]
-      },
-      {
-        id: 's3',
-        name: 'Computer Science Basics',
-        papers: [
-          { id: 'p4', title: '2021 Final Exam', type: 'pdf', date: 'Jan 20, 2022' },
-          { id: 'p5', title: '2022 Final Exam', type: 'pdf', date: 'Jan 15, 2023' }
-        ]
-      }
-    ]
+    const allSubjects = JSON.parse(localStorage.getItem('campus_subjects')) || []
+    const allUploads = JSON.parse(localStorage.getItem('campus_uploads')) || []
+    
+    if (allSubjects.length > 0) {
+      subjects.value = allSubjects.map(s => {
+        const papersForSubject = allUploads
+          .filter(u => u.module === 'Past Papers' && u.subject && u.subject.includes(s.code))
+          .map(u => {
+            let dateStr = 'Recently'
+            if (u.id && u.id > 10000) {
+              const d = new Date(u.id)
+              if (!isNaN(d)) dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            }
+            return {
+              id: u.id,
+              title: u.title || 'Untitled Paper',
+              type: u.type ? u.type.toLowerCase() : 'pdf',
+              date: dateStr,
+              driveLink: u.driveLink,
+              fileData: u.fileData,
+              fileName: u.fileName
+            }
+          }).reverse()
+          
+        return {
+          id: s.code,
+          name: `${s.code} - ${s.name}`,
+          papers: papersForSubject
+        }
+      })
+    } else {
+      subjects.value = [
+        {
+          id: 's1',
+          name: 'Physics 101 (Mechanics)',
+          papers: [
+            { id: 'p1', title: '2022 Final Exam Paper', type: 'pdf', date: 'Jan 10, 2023' },
+            { id: 'p2', title: '2023 Mid Term Paper', type: 'pdf', date: 'Jun 15, 2023' }
+          ]
+        },
+        {
+          id: 's2',
+          name: 'Applied Mathematics',
+          papers: [
+            { id: 'p3', title: '2024 Model Paper', type: 'pdf', date: 'Mar 01, 2025' }
+          ]
+        },
+        {
+          id: 's3',
+          name: 'Computer Science Basics',
+          papers: [
+            { id: 'p4', title: '2021 Final Exam', type: 'pdf', date: 'Jan 20, 2022' },
+            { id: 'p5', title: '2022 Final Exam', type: 'pdf', date: 'Jan 15, 2023' }
+          ]
+        }
+      ]
+    }
     
     loading.value = false
   }, 500)
@@ -136,13 +171,38 @@ function getIconColor(type) {
   return 'grey-6'
 }
 
+function viewFile(file) {
+  if (file.fileData) {
+    const newWindow = window.open()
+    if (newWindow) {
+      newWindow.document.write(`<iframe src="${file.fileData}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`)
+    }
+  } else if (file.driveLink) {
+    window.open(file.driveLink, '_blank')
+  } else {
+    $q.notify({ message: 'No file available to view.', color: 'warning', icon: 'warning' })
+  }
+}
+
 function downloadFile(file) {
+  if (file.fileData) {
+    const link = document.createElement('a')
+    link.href = file.fileData
+    link.download = file.fileName || 'download'
+    link.click()
+  } else if (file.driveLink) {
+    window.open(file.driveLink, '_blank')
+  } else {
+    $q.notify({ message: `No file available to download for ${file.title}.`, color: 'warning', icon: 'warning' })
+  }
+}
+
+function shareFile(file) {
   $q.notify({
-    message: `Starting download for ${file.title}...`,
-    color: 'positive',
-    icon: 'cloud_download',
-    position: 'bottom',
-    timeout: 2000
+    message: `Share link copied for ${file.title || 'file'}! (Sharing large files will be available on live server)`,
+    color: 'info',
+    icon: 'share',
+    position: 'bottom'
   })
 }
 </script>

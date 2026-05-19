@@ -8,7 +8,8 @@ const routes = [
       { path: 'notes/:uploaderId', component: () => import('pages/UploaderSubjectsPage.vue') },
       { path: 'social-media', component: () => import('pages/SocialMediaPage.vue') },
       { path: 'lab-reports', component: () => import('pages/LabReportsPage.vue') },
-      { path: 'past-papers', component: () => import('pages/PastPapersPage.vue') }
+      { path: 'past-papers', component: () => import('pages/PastPapersPage.vue') },
+      { path: 'about', component: () => import('pages/AboutUniversityPage.vue') }
     ]
   },
   

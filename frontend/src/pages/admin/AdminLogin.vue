@@ -30,6 +30,7 @@
             filled 
             type="password" 
             label="Password" 
+            hint="For old default accounts, use 123456"
             :rules="[val => !!val || 'Password is required']"
           >
             <template v-slot:prepend>
@@ -76,22 +77,38 @@ function handleLogin() {
   setTimeout(() => {
     loading.value = false
     
-    // Check credentials as requested: admin / admin
+    const team = JSON.parse(localStorage.getItem('campus_team')) || []
+    
+    // Check if user exists. If they don't have a password (old default accounts), allow '123456'
+    const user = team.find(t => t.username === username.value && 
+      (t.password === password.value || (!t.password && password.value === '123456'))
+    )
+    
+    // Check credentials
     if (username.value === 'admin' && password.value === 'admin') {
-      $q.notify({
-        color: 'positive',
-        position: 'top',
-        message: 'Login Successful! Welcome to Admin Dashboard.',
-        icon: 'check_circle'
-      })
+      localStorage.setItem('campus_notes_admin', JSON.stringify({
+        role: 'superadmin',
+        name: 'Super Admin'
+      }))
+      $q.notify({ color: 'positive', position: 'top', message: 'Welcome Super Admin!', icon: 'shield' })
       $router.push('/admin/dashboard')
+      
+    } else if (user) {
+      // Sub-admin login
+      localStorage.setItem('campus_notes_admin', JSON.stringify({
+        role: 'subadmin',
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        photo: user.photo,
+        modules: user.modules ? user.modules.split(',').map(m => m.trim()) : [],
+        subjects: user.subjects ? user.subjects.split(',').map(s => s.trim()) : []
+      }))
+      $q.notify({ color: 'positive', position: 'top', message: `Welcome ${user.name}!`, icon: 'person' })
+      $router.push('/admin/dashboard')
+      
     } else {
-      $q.notify({
-        color: 'negative',
-        position: 'top',
-        message: 'Invalid Username or Password.',
-        icon: 'error'
-      })
+      $q.notify({ color: 'negative', position: 'top', message: 'Invalid Username or Password.', icon: 'error' })
     }
   }, 800)
 }

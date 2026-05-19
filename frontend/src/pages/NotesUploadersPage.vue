@@ -46,8 +46,8 @@
 
           <q-card-section class="q-pa-lg row items-center no-wrap">
             <q-avatar size="70px" color="indigo-1" text-color="indigo-9" class="q-mr-md shadow-1 font-weight-bold">
-              <!-- Initials as fallback if no image -->
-              {{ uploader.name.charAt(0) }}
+              <img v-if="uploader.photo && !uploader.photo.endsWith('avatar.png')" :src="uploader.photo" />
+              <span v-else>{{ uploader.name.charAt(0) }}</span>
             </q-avatar>
             
             <div>
@@ -79,36 +79,22 @@ const uploaders = ref([])
 
 onMounted(() => {
   setTimeout(() => {
-    uploaders.value = [
-      { 
-        id: 'u1', 
-        name: 'Dr. Kasun Perera', 
-        tag: 'Highly Recommended', 
-        order: 1, // Admin ordering
-        subjectsCount: 4 
-      },
-      { 
-        id: 'u2', 
-        name: 'Amali Fernando', 
-        tag: 'Top Contributor', 
-        order: 2, 
-        subjectsCount: 6 
-      },
-      { 
-        id: 'u3', 
-        name: 'Nishantha Kumara', 
-        tag: '', // No tag
-        order: 4, 
-        subjectsCount: 2 
-      },
-      { 
-        id: 'u4', 
-        name: 'Prof. Senanayake', 
-        tag: 'Official', 
-        order: 3, 
-        subjectsCount: 1 
-      }
-    ]
+    const storedTeam = JSON.parse(localStorage.getItem('campus_team'))
+    if (storedTeam && storedTeam.length > 0) {
+      uploaders.value = storedTeam.map(t => ({
+        id: t.id,
+        name: t.name,
+        tag: t.tag,
+        order: t.order || 99,
+        subjectsCount: t.subjects ? t.subjects.split(',').length : 0,
+        photo: t.photo
+      }))
+    } else {
+      uploaders.value = [
+        { id: 1, name: 'Dr. Kasun Perera', tag: 'Highly Recommended', order: 1, subjectsCount: 1, photo: 'https://cdn.quasar.dev/img/avatar2.jpg' },
+        { id: 2, name: 'Amali Fernando', tag: 'Top Contributor', order: 2, subjectsCount: 1, photo: 'https://cdn.quasar.dev/img/avatar3.jpg' }
+      ]
+    }
     loading.value = false
   }, 400)
 })

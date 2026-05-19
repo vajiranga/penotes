@@ -31,22 +31,25 @@
             autoplay
             infinite
           >
-            <!-- Dynamic Slides from notices array -->
             <q-carousel-slide 
               v-for="notice in notices" 
               :key="notice.id" 
               :name="notice.id"
               :img-src="notice.type === 'image' ? notice.image : ''"
-              class="column no-wrap flex-center text-center"
+              :class="['column', 'no-wrap', 'flex-center', 'text-center', notice.type === 'image' ? 'q-pa-none' : '']"
             >
-              <!-- Dark overlay for image slides to make text readable -->
-              <div v-if="notice.type === 'image'" class="absolute-full" style="background: rgba(0,0,0,0.5);"></div>
-              
-              <div class="relative-position z-top">
-                <q-icon v-if="notice.icon && notice.type !== 'image'" :name="notice.icon" size="40px" class="q-mb-sm" />
+              <!-- TEXT NOTICE LAYOUT -->
+              <div v-if="notice.type !== 'image'" class="full-width">
+                <q-icon v-if="notice.icon" :name="notice.icon" size="40px" class="q-mb-sm" />
                 <div class="text-h4 text-weight-bold q-mb-sm">{{ notice.title }}</div>
                 <div class="text-subtitle1">{{ notice.content }}</div>
                 <div v-if="notice.date" class="text-caption q-mt-sm opacity-8">Posted: {{ notice.date }}</div>
+              </div>
+              
+              <!-- IMAGE NOTICE LAYOUT (Caption at bottom) -->
+              <div v-if="notice.type === 'image'" class="absolute-bottom custom-caption q-pa-sm q-px-md text-left">
+                <div class="text-subtitle1 text-weight-bold">{{ notice.title }}</div>
+                <div v-if="notice.date" class="text-caption opacity-8">Posted: {{ notice.date }}</div>
               </div>
             </q-carousel-slide>
           </q-carousel>
@@ -143,10 +146,23 @@ onMounted(() => {
   setTimeout(() => {
     
     // Load Notice Board Data
-    notices.value = [
-      { id: 1, type: 'text', icon: 'campaign', title: 'Welcome to Semester 2!', content: 'Make sure to check your updated timetables in the Kaveesh Web module.', date: 'Today' },
-      { id: 2, type: 'image', image: 'https://cdn.quasar.dev/img/parallax2.jpg', title: 'Tech Symposium 2026', content: 'Join us at the main hall this Friday for an amazing event.', date: 'Yesterday' }
-    ]
+    const storedNotices = JSON.parse(localStorage.getItem('campus_notices'))
+    if (storedNotices && storedNotices.length > 0) {
+      notices.value = storedNotices.map(n => ({
+        id: n.id,
+        type: n.type?.toLowerCase() === 'image' ? 'image' : 'text',
+        icon: 'campaign', // Default icon
+        title: n.title,
+        content: '', // Can be extended in dashboard later
+        date: n.date,
+        image: n.image || 'https://cdn.quasar.dev/img/parallax2.jpg' // Use uploaded image or default
+      }))
+    } else {
+      notices.value = [
+        { id: 1, type: 'text', icon: 'campaign', title: 'Welcome to Semester 2!', content: 'Make sure to check your updated timetables in the Kaveesh Web module.', date: 'Today' },
+        { id: 2, type: 'image', image: 'https://cdn.quasar.dev/img/parallax2.jpg', title: 'Tech Symposium 2026', content: 'Join us at the main hall this Friday for an amazing event.', date: 'Yesterday' }
+      ]
+    }
 
     // Load Modules Data
     studyModules.value = [
@@ -157,18 +173,32 @@ onMounted(() => {
       { id: 6, title: 'Our Social Media', icon: 'thumb_up', color: 'pink', description: 'Connect with us on social platforms' },
       { id: 5, title: 'Kaveesh Web', icon: 'public', color: 'teal', description: 'Assignment dates, Timetables & Gallery' },
       { id: 7, title: '57 Notes', icon: 'folder_shared', color: 'light-blue', description: 'Access Batch 57 Drive Folder' },
-      { id: 8, title: '58 Notes', icon: 'folder_shared', color: 'indigo', description: 'Access Batch 58 Drive Folder' }
+      { id: 8, title: '58 Notes', icon: 'folder_shared', color: 'indigo', description: 'Access Batch 58 Drive Folder' },
+      { id: 9, title: 'About University', icon: 'account_balance', color: 'blue-grey', description: 'History & Specifications' }
     ]
     loading.value = false
   }, 600) // 600ms fake delay
 })
 
-// Admin Team Data
-const adminTeam = [
-  { id: 1, name: 'Kaveesh', role: 'Founder & Lead Admin', avatar: 'https://cdn.quasar.dev/img/avatar2.jpg' },
-  { id: 2, name: 'Vaji', role: 'Technical Lead', avatar: 'https://cdn.quasar.dev/img/avatar3.jpg' },
-  { id: 3, name: 'Admin Team', role: 'Content Moderators', avatar: 'https://cdn.quasar.dev/img/avatar4.jpg' }
-]
+const adminTeam = ref([])
+
+onMounted(() => {
+  const storedTeam = JSON.parse(localStorage.getItem('campus_team'))
+  if (storedTeam && storedTeam.length > 0) {
+    adminTeam.value = storedTeam.map(t => ({
+      id: t.id,
+      name: t.name,
+      role: t.tag || t.modules || 'Admin Team',
+      avatar: t.photo || 'https://cdn.quasar.dev/img/avatar.png'
+    }))
+  } else {
+    adminTeam.value = [
+      { id: 1, name: 'Kaveesh', role: 'Founder & Lead Admin', avatar: 'https://cdn.quasar.dev/img/avatar2.jpg' },
+      { id: 2, name: 'Vaji', role: 'Technical Lead', avatar: 'https://cdn.quasar.dev/img/avatar3.jpg' },
+      { id: 3, name: 'Admin Team', role: 'Content Moderators', avatar: 'https://cdn.quasar.dev/img/avatar4.jpg' }
+    ]
+  }
+})
 
 // Action handler for cards
 function handleCardClick(card) {
@@ -200,6 +230,10 @@ function handleCardClick(card) {
   }
   if (card.id === 8 || card.title === '58 Notes') {
     window.open('https://drive.google.com/drive/folders/dummy-link-58', '_blank')
+    return
+  }
+  if (card.id === 9 || card.title === 'About University') {
+    $router.push('/about')
     return
   }
   
@@ -239,5 +273,14 @@ function handleCardClick(card) {
   transform: translateY(-8px);
   box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
   border-color: #e0e0e0;
+}
+
+/* Notice Image Caption */
+.custom-caption {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  color: white;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 </style>

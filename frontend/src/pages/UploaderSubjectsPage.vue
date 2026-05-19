@@ -58,7 +58,11 @@
                     </q-item-section>
 
                     <q-item-section side>
-                      <q-btn outline rounded color="indigo" icon="download" label="Get" size="sm" @click.stop="downloadNote(note)" />
+                      <div class="row q-gutter-xs">
+                        <q-btn flat round color="indigo" icon="visibility" size="sm" @click.stop="viewFile(note)" tooltip="View" />
+                        <q-btn flat round color="green" icon="download" size="sm" @click.stop="downloadFile(note)" tooltip="Download" />
+                        <q-btn flat round color="orange" icon="share" size="sm" @click.stop="shareFile(note)" tooltip="Share" />
+                      </div>
                     </q-item-section>
                   </q-item>
                   
@@ -93,49 +97,61 @@ const uploaderName = ref('Contributor')
 const subjects = ref([])
 
 onMounted(() => {
-  // Capture the ID from the URL (e.g. /notes/u1)
   const uploaderId = $route.params.uploaderId
   
-  // Simulate fetching the uploader's subjects and notes from the Backend
   setTimeout(() => {
+    const team = JSON.parse(localStorage.getItem('campus_team')) || []
+    const allSubjects = JSON.parse(localStorage.getItem('campus_subjects')) || []
+    const allUploads = JSON.parse(localStorage.getItem('campus_uploads')) || []
     
-    // Fake database logic based on uploader ID
-    if (uploaderId === 'u1') {
-      uploaderName.value = 'Dr. Kasun Perera'
-      subjects.value = [
-        {
-          id: 's1',
-          name: 'Physics 101 (Mechanics)',
-          notes: [
-            { id: 'n1', title: 'Chapter 1: Kinematics Intro', type: 'pdf', date: 'Oct 01, 2025' },
-            { id: 'n2', title: 'Chapter 2: Newton Laws', type: 'pdf', date: 'Oct 08, 2025' }
-          ]
-        },
-        {
-          id: 's2',
-          name: 'Applied Mathematics',
-          notes: [
-            { id: 'n3', title: 'Calculus Summary', type: 'doc', date: 'Sep 15, 2025' }
-          ]
+    const member = team.find(t => String(t.id) === String(uploaderId))
+    
+    if (member) {
+      uploaderName.value = member.name
+      
+      const assignedSubjectCodes = member.subjects ? member.subjects.split(',').map(s => s.trim()) : []
+      
+      subjects.value = assignedSubjectCodes.map(code => {
+        const subjectDetails = allSubjects.find(s => s.code === code)
+        const subjectName = subjectDetails ? subjectDetails.name : code
+        
+        // Filter uploads for this user and module = 'Notes'
+        const uploaderNotes = allUploads.filter(u => u.uploaderName?.trim() === member.name?.trim() && u.module?.trim() === 'Notes')
+        
+        // Group by subject
+        const notesForSubject = uploaderNotes
+          .filter(u => u.subject && u.subject.includes(code))
+          .map(u => {
+            // format date from ID if available
+            let dateStr = 'Recently'
+            if (u.id && u.id > 10000) {
+              const d = new Date(u.id)
+              if (!isNaN(d)) dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            }
+            return {
+              id: u.id,
+              title: u.title || 'Untitled Note',
+              type: u.type ? u.type.toLowerCase() : 'pdf',
+              date: dateStr,
+              driveLink: u.driveLink,
+              fileData: u.fileData,
+              fileName: u.fileName
+            }
+          }).reverse() // Newest first
+        
+        return {
+          id: code,
+          name: `${code} - ${subjectName}`,
+          notes: notesForSubject
         }
-      ]
+      })
     } else {
-      uploaderName.value = 'Amali Fernando'
-      subjects.value = [
-        {
-          id: 's3',
-          name: 'Computer Science Basics',
-          notes: [
-            { id: 'n4', title: 'Data Structures Cheat Sheet', type: 'pdf', date: 'Nov 10, 2025' },
-            { id: 'n5', title: 'Algorithm Complexity', type: 'pdf', date: 'Nov 12, 2025' },
-            { id: 'n6', title: 'Final Assignment Template', type: 'zip', date: 'Nov 20, 2025' }
-          ]
-        }
-      ]
+      uploaderName.value = 'Unknown Contributor'
+      subjects.value = []
     }
     
     loading.value = false
-  }, 500)
+  }, 400)
 })
 
 // Helper UI functions
@@ -153,13 +169,38 @@ function getIconColor(type) {
   return 'grey-6'
 }
 
-function downloadNote(note) {
+function viewFile(file) {
+  if (file.fileData) {
+    const newWindow = window.open()
+    if (newWindow) {
+      newWindow.document.write(`<iframe src="${file.fileData}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`)
+    }
+  } else if (file.driveLink) {
+    window.open(file.driveLink, '_blank')
+  } else {
+    $q.notify({ message: 'No file available to view.', color: 'warning', icon: 'warning' })
+  }
+}
+
+function downloadFile(file) {
+  if (file.fileData) {
+    const link = document.createElement('a')
+    link.href = file.fileData
+    link.download = file.fileName || 'download'
+    link.click()
+  } else if (file.driveLink) {
+    window.open(file.driveLink, '_blank')
+  } else {
+    $q.notify({ message: `No file available to download for ${file.title}.`, color: 'warning', icon: 'warning' })
+  }
+}
+
+function shareFile(file) {
   $q.notify({
-    message: `Starting download for ${note.title}...`,
-    color: 'positive',
-    icon: 'cloud_download',
-    position: 'bottom',
-    timeout: 2000
+    message: `Share link copied for ${file.title || 'file'}! (Sharing large files will be available on live server)`,
+    color: 'info',
+    icon: 'share',
+    position: 'bottom'
   })
 }
 </script>
