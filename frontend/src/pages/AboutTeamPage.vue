@@ -19,8 +19,12 @@
           <div class="text-h6 text-weight-bold text-indigo-10">{{ admin.name }}</div>
           <div class="text-subtitle2 text-grey-7">{{ admin.role }}</div>
           <q-card-actions align="center" class="q-mt-sm">
-            <q-btn flat round color="blue" icon="email" />
-            <q-btn flat round color="light-blue" icon="language" />
+            <q-btn v-if="admin.phone" flat round color="green-6" icon="chat" type="a" :href="'https://wa.me/' + admin.phone" target="_blank">
+              <q-tooltip>WhatsApp</q-tooltip>
+            </q-btn>
+            <q-btn v-else flat round color="grey-4" icon="chat" disable>
+              <q-tooltip>No Contact Number</q-tooltip>
+            </q-btn>
           </q-card-actions>
         </q-card>
       </div>
@@ -40,7 +44,8 @@ onMounted(() => {
       id: t.id,
       name: t.name,
       role: t.tag || t.modules || 'Admin Team',
-      avatar: t.photo || 'https://cdn.quasar.dev/img/avatar.png'
+      avatar: t.photo || 'https://cdn.quasar.dev/img/avatar.png',
+      phone: t.phone ? t.phone.replace(/[^0-9]/g, '') : null
     }))
   } else {
     adminTeam.value = [

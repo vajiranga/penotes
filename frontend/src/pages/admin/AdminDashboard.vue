@@ -259,10 +259,13 @@
             </div>
             
             <div class="row q-col-gutter-sm">
-              <div class="col-12 col-sm-6">
+              <div class="col-12 col-sm-4">
                 <q-input v-model="newAdmin.password" type="password" label="Password" filled required />
               </div>
-              <div class="col-12 col-sm-6">
+              <div class="col-12 col-sm-4">
+                <q-input v-model="newAdmin.phone" type="tel" label="WhatsApp Number" hint="e.g. +94771234567" filled />
+              </div>
+              <div class="col-12 col-sm-4">
                 <q-file 
                   v-model="adminPhotoFile" 
                   label="Upload Photo (Optional)" 
@@ -497,7 +500,7 @@ const uploadColumns = [
 const editingId = ref(null)
 
 const adminDialog = ref(false)
-const newAdmin = ref({ name: '', username: '', password: '', photo: '', modules: [], subjects: [], tag: '', order: 3 })
+const newAdmin = ref({ name: '', username: '', password: '', phone: '', photo: '', modules: [], subjects: [], tag: '', order: 1 })
 const adminPhotoFile = ref(null)
 
 const noticeDialog = ref(false)
@@ -608,6 +611,7 @@ function saveAdmin() {
     modules: newAdmin.value.modules.join(', '),
     subjects: newAdmin.value.subjects.map(s => s.split(' - ')[0]).join(', '),
     tag: newAdmin.value.tag,
+    phone: newAdmin.value.phone,
     order: newAdmin.value.order,
     photo: newAdmin.value.photo || 'https://cdn.quasar.dev/img/avatar.png'
   }
@@ -621,7 +625,7 @@ function saveAdmin() {
     $q.notify({ color: 'positive', message: 'New Contributor added!' })
   }
   
-  newAdmin.value = { name: '', username: '', password: '', photo: '', modules: [], subjects: [], tag: '', order: team.value.length + 1 }
+  newAdmin.value = { name: '', username: '', password: '', phone: '', photo: '', modules: [], subjects: [], tag: '', order: team.value.length + 1 }
   adminPhotoFile.value = null
   adminDialog.value = false
 }
