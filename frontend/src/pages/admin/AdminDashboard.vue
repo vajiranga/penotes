@@ -403,9 +403,32 @@ const myUploads = ref(JSON.parse(localStorage.getItem('campus_uploads')) || [
   { id: 1, title: 'Chapter 1 Notes', module: 'Notes', subject: 'PHY101', type: 'PDF', driveLink: 'https://drive.google.com/test' }
 ])
 
-watch(notices, (newVal) => localStorage.setItem('campus_notices', JSON.stringify(newVal)), { deep: true })
-watch(subjects, (newVal) => localStorage.setItem('campus_subjects', JSON.stringify(newVal)), { deep: true })
-watch(team, (newVal) => localStorage.setItem('campus_team', JSON.stringify(newVal)), { deep: true })
+watch(notices, (newVal) => {
+  try {
+    localStorage.setItem('campus_notices', JSON.stringify(newVal))
+  } catch (err) {
+    newVal.pop()
+    $q.notify({ color: 'negative', message: 'Storage Limit Exceeded! Notice image too large.', icon: 'error' })
+  }
+}, { deep: true })
+
+watch(subjects, (newVal) => {
+  try {
+    localStorage.setItem('campus_subjects', JSON.stringify(newVal))
+  } catch (err) {
+    newVal.pop()
+    $q.notify({ color: 'negative', message: 'Storage Limit Exceeded!', icon: 'error' })
+  }
+}, { deep: true })
+
+watch(team, (newVal) => {
+  try {
+    localStorage.setItem('campus_team', JSON.stringify(newVal))
+  } catch (err) {
+    newVal.pop()
+    $q.notify({ color: 'negative', message: 'Storage Limit Exceeded! Contributor photo is too large.', icon: 'error' })
+  }
+}, { deep: true })
 watch(myUploads, (newVal) => {
   try {
     localStorage.setItem('campus_uploads', JSON.stringify(newVal))
