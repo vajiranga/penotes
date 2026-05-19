@@ -661,11 +661,13 @@ async function handleUpload() {
   const formData = new FormData()
   formData.append('file', uploadFile.value)
 
+  let dismiss = () => {}
+
   try {
     // For Vercel production to Render backend
     const backendUrl = 'https://campus-notes-backend-abze.onrender.com/api/upload' 
 
-    $q.notify({ message: 'Uploading to Google Drive... Please wait.', color: 'info', timeout: 0, position: 'top', icon: 'cloud_upload' })
+    dismiss = $q.notify({ message: 'Uploading to Google Drive... Please wait.', color: 'info', timeout: 0, position: 'top', icon: 'cloud_upload' })
 
     const response = await fetch(backendUrl, {
       method: 'POST',
@@ -694,12 +696,12 @@ async function handleUpload() {
       driveId: result.folderUsed
     })
 
-    $q.dismiss() // Dismiss loading notification
+    dismiss() // Dismiss loading notification
     resetUploadForm()
 
   } catch (error) {
     console.error('Upload error:', error)
-    $q.dismiss()
+    dismiss()
     $q.notify({ color: 'negative', message: error.message, position: 'top' })
   } finally {
     uploading.value = false

@@ -19,8 +19,12 @@ const DRIVE_FOLDERS = [
 ];
 
 // Initialize Google Drive API Client
+const credentials = require('./google-credentials.json');
 const auth = new google.auth.GoogleAuth({
-  keyFile: './google-credentials.json',
+  credentials: {
+    client_email: credentials.client_email,
+    private_key: credentials.private_key.replace(/\\n/g, '\n').replace(/\r/g, ''),
+  },
   scopes: ['https://www.googleapis.com/auth/drive.file'],
 });
 
