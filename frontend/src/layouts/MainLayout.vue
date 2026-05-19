@@ -122,9 +122,9 @@
     </div>
 
     <!-- Footer -->
-    <q-footer elevated class="bg-indigo-10 text-white text-center q-pa-sm">
-      <div class="text-subtitle2 font-weight-medium">
-        Developed by <span class="text-amber-4 text-weight-bold">Vajiranga</span> and <span class="text-amber-4 text-weight-bold">Kaweesh</span>
+    <q-footer class="bg-transparent text-grey-7 text-center q-pb-sm" style="box-shadow: none;">
+      <div class="text-caption text-weight-medium">
+        Developed by <b>Vajiranga</b> & <b>Kaweesh</b>
       </div>
     </q-footer>
 

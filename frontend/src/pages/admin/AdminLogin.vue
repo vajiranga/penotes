@@ -104,8 +104,8 @@ function handleLogin() {
         name: user.name,
         username: user.username,
         photo: user.photo,
-        modules: user.modules ? user.modules.split(',').map(m => m.trim()) : [],
-        subjects: user.subjects ? user.subjects.split(',').map(s => s.trim()) : []
+        modules: user.modules ? (Array.isArray(user.modules) ? user.modules : user.modules.split(',').map(m => m.trim())) : [],
+        subjects: user.subjects ? (Array.isArray(user.subjects) ? user.subjects : user.subjects.split(',').map(s => s.trim())) : []
       }))
       $q.notify({ color: 'positive', position: 'top', message: `Welcome ${user.name}!`, icon: 'person' })
       $router.push('/admin/dashboard')
