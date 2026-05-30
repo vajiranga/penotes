@@ -32,6 +32,9 @@ async function getStorage() {
 }
 
 async function ensureFolderLoaded(folder) {
+  if (Array.isArray(folder.children)) {
+    return;
+  }
   if (typeof folder.loadAttributes === 'function') {
     await new Promise((resolve, reject) => {
       folder.loadAttributes(error => {
