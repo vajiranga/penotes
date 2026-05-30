@@ -660,6 +660,9 @@ async function handleUpload() {
   // Prepare form data for the backend API
   const formData = new FormData()
   formData.append('file', uploadFile.value)
+  formData.append('subject', uploadForm.value.subject)
+  formData.append('module', uploadForm.value.module)
+  formData.append('uploaderName', currentUser.value.name)
 
   let dismiss = () => {}
 

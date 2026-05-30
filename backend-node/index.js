@@ -2,8 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
-const { google } = require('googleapis');
-const stream = require('stream');
+const mega = require('megajs');
 
 const app = express();
 app.use(cors());
@@ -12,109 +11,190 @@ app.use(express.json());
 // In-memory setup for Multer (we pass streams to Google Drive)
 const upload = multer({ storage: multer.memoryStorage() });
 
-// The fallback list of Google Drive Folders
-const DRIVE_FOLDERS = [
-  '1j29oZyFBrx_R2S4GleEuTqHEj92Am_57', // Drive 1
-  '1nRAVPWenNtcMah0irxKnZsdXaGbRmeK0'  // Drive 2 (Failover)
-];
+const MEGA_EMAIL = process.env.MEGA_EMAIL || '';
+const MEGA_PASSWORD = process.env.MEGA_PASSWORD || '';
 
-// Initialize Google Drive API Client using Base64 to bypass any file/git formatting issues
-const b64 = "ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsCiAgInByb2plY3RfaWQiOiAibXlzdGljLWNyZWVrLTQyOTkwNS1nOSIsCiAgInByaXZhdGVfa2V5X2lkIjogIjA1ZDZjODU1YTRiYTdjNjk0N2M3ZTI2ODFlY2M1ZjE4ODcyNzEyM2QiLAogICJwcml2YXRlX2tleSI6ICItLS0tLUJFR0lOIFBSSVZBVEUgS0VZLS0tLS1cbk1JSUV2Z0lCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktnd2dnU2tBZ0VBQW9JQkFRRGdySkwxQmxGc1lIZGtcbkdhTUoxelp5R2Q2K21zTmJGakRyUjBDMTFHeXp5YW40QndvOXpIMEF4LzAwYzUxZUFnbUJ5MVQrc0dzRnpBMHlcblBUOFhvT3c5YTB4V3VlUXJsVmM1cENHdDJlU2NBQzhQZHFQaW9YNnZIeU1yQlFwMnpSZ1VPQjlWd24yVk1TUzJcbncreW0vTFBSbU5MbDlOSFR1RjB2dU1DZTRlRERRZVF0SDQwV3VuNU1kWnNnTnRVV2NoSDZ4OG5qUzJlenRYWVdcbjZseGtac3R2cUZWR1dOdkRaaExibm5wQmhoWWhqRXNxNVBkMXQxRWg4NXd2dWo2dUxUOTcvZEVlUGFBNDlBLy9cblNTV1FFWjVRNUg2em43N25CWS9TKzRBSHBlK3UrMElCcG5zSCt4Rmhod0M3WnhacWJzOVdiYUN2Ty9BWVI3QTNcblRIT0xvRTY3QWdNQkFBRUNnZ0VBSnh2ak9PT3dxTHppQzNxcTlydVBycXp5S1J1bmhlT0hBRzJXeGhBRUhBZXVcbm5vNGJLa2ErTzdTVVR0MFJONXdESzZUSlZzdysxUE9BR0k2d3ZOdzJRenE2UHg1OHFWbUZwWEw4cWRhVUJOUERcblhWMjVpV216TTZpbjVvVXFIU1AyWFE2bjViWEZSb01YY1BrSjZNZDBSYmZrZmtMdmczdEVQVnBiclV5RVkzaHhcbk93SHpqYWR0VWJUSFR6ekhhNjFqNlR0dkdFMWdtVjI4VkRkY2NHeUxXQmUvWEtsQldDVnRiV29WL3VzUTFpemNcbmduMXBydjN2cEZwTXZTaWZVUWVOS1JXbWoxUWZ4M0srN1B1bHlNbjVTelNyVmNlQXEvR21XaVB3TitSNGxXTDlcbnhxQmtUaFdRbVZkTXZoeHN2Vk9iWEZNaDNaNGRhQlk1TVNBTE1EYUtnUUtCZ1FENi91KzN0elYraWozQlhtS0dcbmtkSzcxVVFMSjRLVDJGeDcwMWVMWXdJTHJNb0gwK1o1TmhsR1VPcDFlQklRL2RWMVFpSnZEa21pc202YmdBSGtcbnFBRjltZWtYczBRU2JsRUdqTjRjSWxIQkhxZkc2ZzBSdDBIc3I4a3JBR2Y0alB3bk0vRWwxK0htSWJVLzBoV3VcblJZTTc2UkxrbEdzK2FFWDlPQzQvSGNMOTNRS0JnUURsSjBzblBwbVQxdjdyUXFLYjRkM1IzbkFyY05LdVhWd1VcbnlpSVBxZkdYRmIwYVhSSFlwWkFzczlNdDRBeWV5SkZ2UEkzV3dieXp4UnZIRWxacFB4cnNQSDllZDZrbHhIbjJcbmJHK2tiK2kvbzJIcGRkbjdZWjZhbldhRk8rcW42K0U3bnJiaDk5Mll5SEJReEgxVGRiS20wVFAvbHEvR0E1VTlcbkVJRUdkeWt4ZHdLQmdCdzZ6aVZna3NDdnRiQm8rRFhnY3M0emQxcTF6K2JtLzhmaGhrZ2tFNWZTa0VwL0Y3M3NcblNyMXczbDNsNmtwRThsd2syeENZajhtZnZmYjVWNzBxOURmM05wTTIwMklyVEN1cmJsUEZ2R0kzRzNHdzQxVnBcbndoMW55LzF0SjBSNlB1WDkzcEorREdkQXhVenZTUWIzeElIWmZnbDljKzVwOWUwOEExK1A3bDExQW9HQkFOZVBcbitTQjN3TnpUK0lXeTcyaVlOcVNBRFNDd1IyQURMdVhYcCtiNFJPMk5ZNUJ6VUtCdVRvdmV0WitJRGhjb01iZGtcblRVRmlpbkxKenZHYmpISUJEUUNCZ0llTEpURUQvSDhWVG9odlJaRlF6b0JoZnFiOUU4ZjZuVUJrTnIrMEl2S0VcbndTRWNtL1puUjFDVEpobm10Q0k4MWg5dXp2Y0UwOVRYdTZnclhETE5Bb0dCQU1sRFZoY3pZSjNTN0xVdVZ3VWpcbm5MZXQ5N1UvTFU1VVd4YVMrbnp0c1FrSVBZNFQrejFqMnovZEo0cThPTG15NFVGQ0JxYTNKZ1JIK2xqYUhRdERcbi9hNVY5cDlpcnZYUzJudkFLQXIvTkpBeWdNdTNUMS9FYUs1MzhnZzNoUWVQSXJ0M3Rlc1VFMWpVWkhNQkdlQ05cbmhTQTRwZHIwZFAxd3Q1amFzR0haZWFXcVxuLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLVxuIiwKICAiY2xpZW50X2VtYWlsIjogImNhbXB1cy1ub3Rlcy1ib3RAbXlzdGljLWNyZWVrLTQyOTkwNS1nOS5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsCiAgImNsaWVudF9pZCI6ICIxMTA0ODMzNzA1MTcwMTM1NTYwODQiLAogICJhdXRoX3VyaSI6ICJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20vby9vYXV0aDIvYXV0aCIsCiAgInRva2VuX3VyaSI6ICJodHRwczovL29hdXRoMi5nb29nbGVhcGlzLmNvbS90b2tlbiIsCiAgImF1dGhfcHJvdmlkZXJfeDUwOV9jZXJ0X3VybCI6ICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9vYXV0aDIvdjEvY2VydHMiLAogICJjbGllbnRfeDUwOV9jZXJ0X3VybCI6ICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9yb2JvdC92MS9tZXRhZGF0YS94NTA5L2NhbXB1cy1ub3Rlcy1ib3QlNDBteXN0aWMtY3JlZWstNDI5OTA1LWc5LmlhbS5nc2VydmljZWFjY291bnQuY29tIiwKICAidW5pdmVyc2VfZG9tYWluIjogImdvb2dsZWFwaXMuY29tIgp9";
-const credentials = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+function assertEnv() {
+  if (!MEGA_EMAIL || !MEGA_PASSWORD) {
+    throw new Error('Missing MEGA_EMAIL or MEGA_PASSWORD.');
+  }
+}
 
-const auth = new google.auth.GoogleAuth({
-  credentials: {
-    client_email: credentials.client_email,
-    private_key: credentials.private_key,
-  },
-  scopes: ['https://www.googleapis.com/auth/drive.file'],
-});
+async function getStorage() {
+  const storage = new mega.Storage({
+    email: MEGA_EMAIL,
+    password: MEGA_PASSWORD,
+    userAgent: 'CampusNotes/1.0'
+  });
 
-const drive = google.drive({ version: 'v3', auth });
+  await storage.ready;
+  return storage;
+}
+
+async function ensureFolderLoaded(folder) {
+  if (typeof folder.loadAttributes === 'function') {
+    await new Promise((resolve, reject) => {
+      folder.loadAttributes(error => (error ? reject(error) : resolve()));
+    });
+    return;
+  }
+
+  if (typeof folder.load === 'function') {
+    await new Promise((resolve, reject) => {
+      folder.load(error => (error ? reject(error) : resolve()));
+    });
+  }
+}
+
+async function ensureFolder(parent, name) {
+  await ensureFolderLoaded(parent);
+  const existing = (parent.children || []).find(
+    (child) => child.name === name && child.directory
+  );
+
+  if (existing) return existing;
+
+  if (typeof parent.mkdir === 'function') {
+    return new Promise((resolve, reject) => {
+      parent.mkdir(name, (error, folder) => (error ? reject(error) : resolve(folder)));
+    });
+  }
+
+  throw new Error('MEGA folder creation is not supported by this client.');
+}
+
+async function ensureFolderPath(root, parts) {
+  let current = root;
+  for (const part of parts) {
+    if (!part) continue;
+    current = await ensureFolder(current, part);
+  }
+  return current;
+}
+
+async function uploadToFolder(folder, file) {
+  const upload = folder.upload(
+    { name: file.originalname, size: file.buffer.length },
+    file.buffer
+  );
+
+  return new Promise((resolve, reject) => {
+    upload.on('complete', resolve);
+    upload.on('error', reject);
+  });
+}
+
+async function createMegaLink(file) {
+  if (typeof file.link !== 'function') return null;
+
+  return new Promise((resolve, reject) => {
+    file.link((error, url) => (error ? reject(error) : resolve(url)));
+  });
+}
+
+function escapeDriveQuery(value) {
+  return String(value).replace(/'/g, "\\'");
+}
+
+async function ensureFolder(drive, name, parentId) {
+  const escapedName = escapeDriveQuery(name);
+  const q = [
+    "mimeType='application/vnd.google-apps.folder'",
+    `name='${escapedName}'`,
+    "trashed=false",
+    `'${parentId}' in parents`
+  ].join(' and ');
+
+  const listRes = await drive.files.list({
+    q,
+    fields: 'files(id, name)',
+    pageSize: 1,
+    spaces: 'drive'
+  });
+
+  if (listRes.data.files && listRes.data.files.length > 0) {
+    return listRes.data.files[0].id;
+  }
+
+  const createRes = await drive.files.create({
+    resource: {
+      name,
+      mimeType: 'application/vnd.google-apps.folder',
+      parents: [parentId]
+    },
+    fields: 'id'
+  });
+
+  return createRes.data.id;
+}
+
+async function ensureFolderPath(drive, parentId, parts) {
+  let currentParent = parentId;
+  for (const part of parts) {
+    if (!part) continue;
+    currentParent = await ensureFolder(drive, part, currentParent);
+  }
+  return currentParent;
+}
+
+function normalizeFolderName(value, fallback) {
+  if (!value || typeof value !== 'string') return fallback;
+  const trimmed = value.trim();
+  return trimmed || fallback;
+}
+
 
 app.post('/api/upload', upload.single('file'), async (req, res) => {
+  try {
+    assertEnv();
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
 
-  const fileMetadata = {
-    name: req.file.originalname,
-    // Add parents dynamically during the upload attempt
-  };
+  const subject = normalizeFolderName(req.body.subject, 'General');
+  const moduleName = normalizeFolderName(req.body.module, 'General');
+  const uploaderName = normalizeFolderName(req.body.uploaderName, 'Uploader');
 
-  const bufferStream = new stream.PassThrough();
-  bufferStream.end(req.file.buffer);
 
-  const media = {
-    mimeType: req.file.mimetype,
-    body: bufferStream,
-  };
+  try {
+    const storage = await getStorage();
+    const targetFolder = await ensureFolderPath(
+      storage.root,
+      [subject, moduleName, uploaderName]
+    );
 
-  // Auto-failover logic
-  for (let i = 0; i < DRIVE_FOLDERS.length; i++) {
-    const folderId = DRIVE_FOLDERS[i];
-    fileMetadata.parents = [folderId];
+    console.log('Attempting to upload to MEGA');
+    const uploadedFile = await uploadToFolder(targetFolder, req.file);
+    const shareLink = await createMegaLink(uploadedFile);
 
-    try {
-      console.log(`Attempting to upload to folder: ${folderId}`);
-      const uploadedFile = await drive.files.create({
-        resource: fileMetadata,
-        media: media,
-        fields: 'id, webViewLink, webContentLink',
-      });
-
-      // If successful, grant public read permission so anyone can download
-      await drive.permissions.create({
-        fileId: uploadedFile.data.id,
-        requestBody: {
-          role: 'reader',
-          type: 'anyone',
-        },
-      });
-
-      return res.json({
-        success: true,
-        message: 'File uploaded successfully',
-        driveLink: uploadedFile.data.webViewLink,
-        downloadLink: uploadedFile.data.webContentLink,
-        folderUsed: i + 1
-      });
-
-    } catch (error) {
-      console.error(`Upload failed for folder ${folderId}:`, error.message);
-      
-      // If it's a quota exceeded error or permission error, continue to the next folder
-      if (
-        error.message.includes('quota') || 
-        error.message.includes('storage') || 
-        error.message.includes('exceeded') ||
-        error.code === 403 || 
-        error.code === 404
-      ) {
-        if (i === DRIVE_FOLDERS.length - 1) {
-          // It was the last folder!
-          return res.status(507).json({ error: 'All linked Google Drives are full! Please add more storage.' });
-        }
-        console.log(`Switching to backup folder: ${DRIVE_FOLDERS[i + 1]}`);
-        
-        // Re-create stream for the next attempt
-        const newBufferStream = new stream.PassThrough();
-        newBufferStream.end(req.file.buffer);
-        media.body = newBufferStream;
-        
-        continue;
-      }
-      
-      // If it's some other random error (e.g. network), fail early
-      return res.status(500).json({ error: 'Failed to upload to Google Drive: ' + error.message });
-    }
+    return res.json({
+      success: true,
+      message: 'File uploaded successfully',
+      megaLink: shareLink,
+      driveLink: shareLink,
+      folderPath: [subject, moduleName, uploaderName].join(' / ')
+    });
+  } catch (error) {
+    console.error('Upload failed:', error.message);
+    return res.status(500).json({ error: 'Failed to upload to MEGA: ' + error.message });
   }
 });
 
 app.get('/api/test-auth', async (req, res) => {
   try {
-    const client = await auth.getClient();
-    res.json({ success: true, email: credentials.client_email, project: credentials.project_id });
+    assertEnv();
+    const storage = await getStorage();
+    await ensureFolderLoaded(storage.root);
+    const sample = (storage.root.children || [])[0];
+    res.json({
+      success: true,
+      rootFolderName: storage.root.name || 'root',
+      sampleName: sample ? sample.name : null
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message, stack: error.stack });
   }

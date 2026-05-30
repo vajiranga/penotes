@@ -1,42 +1,48 @@
-const fs = require('fs');
-const { google } = require('googleapis');
-const stream = require('stream');
+require('dotenv').config();
+const mega = require('megajs');
 
-const b64 = "ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsCiAgInByb2plY3RfaWQiOiAibXlzdGljLWNyZWVrLTQyOTkwNS1nOSIsCiAgInByaXZhdGVfa2V5X2lkIjogIjA1ZDZjODU1YTRiYTdjNjk0N2M3ZTI2ODFlY2M1ZjE4ODcyNzEyM2QiLAogICJwcml2YXRlX2tleSI6ICItLS0tLUJFR0lOIFBSSVZBVEUgS0VZLS0tLS1cbk1JSUV2Z0lCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktnd2dnU2tBZ0VBQW9JQkFRRGdySkwxQmxGc1lIZGtcbkdhTUoxelp5R2Q2K21zTmJGakRyUjBDMTFHeXp5YW40QndvOXpIMEF4LzAwYzUxZUFnbUJ5MVQrc0dzRnpBMHlcblBUOFhvT3c5YTB4V3VlUXJsVmM1cENHdDJlU2NBQzhQZHFQaW9YNnZIeU1yQlFwMnpSZ1VPQjlWd24yVk1TUzJcbncreW0vTFBSbU5MbDlOSFR1RjB2dU1DZTRlRERRZVF0SDQwV3VuNU1kWnNnTnRVV2NoSDZ4OG5qUzJlenRYWVdcbjZseGtac3R2cUZWR1dOdkRaaExibm5wQmhoWWhqRXNxNVBkMXQxRWg4NXd2dWo2dUxUOTcvZEVlUGFBNDlBLy9cblNTV1FFWjVRNUg2em43N25CWS9TKzRBSHBlK3UrMElCcG5zSCt4Rmhod0M3WnhacWJzOVdiYUN2Ty9BWVI3QTNcblRIT0xvRTY3QWdNQkFBRUNnZ0VBSnh2ak9PT3dxTHppQzNxcTlydVBycXp5S1J1bmhlT0hBRzJXeGhBRUhBZXVcbm5vNGJLa2ErTzdTVVR0MFJONXdESzZUSlZzdysxUE9BR0k2d3ZOdzJRenE2UHg1OHFWbUZwWEw4cWRhVUJOUERcblhWMjVpV216TTZpbjVvVXFIU1AyWFE2bjViWEZSb01YY1BrSjZNZDBSYmZrZmtMdmczdEVQVnBiclV5RVkzaHhcbk93SHpqYWR0VWJUSFR6ekhhNjFqNlR0dkdFMWdtVjI4VkRkY2NHeUxXQmUvWEtsQldDVnRiV29WL3VzUTFpemNcbmduMXBydjN2cEZwTXZTaWZVUWVOS1JXbWoxUWZ4M0srN1B1bHlNbjVTelNyVmNlQXEvR21XaVB3TitSNGxXTDlcbnhxQmtUaFdRbVZkTXZoeHN2Vk9iWEZNaDNaNGRhQlk1TVNBTE1EYUtnUUtCZ1FENi91KzN0elYraWozQlhtS0dcbmtkSzcxVVFMSjRLVDJGeDcwMWVMWXdJTHJNb0gwK1o1TmhsR1VPcDFlQklRL2RWMVFpSnZEa21pc202YmdBSGtcbnFBRjltZWtYczBRU2JsRUdqTjRjSWxIQkhxZkc2ZzBSdDBIc3I4a3JBR2Y0alB3bk0vRWwxK0htSWJVLzBoV3VcblJZTTc2UkxrbEdzK2FFWDlPQzQvSGNMOTNRS0JnUURsSjBzblBwbVQxdjdyUXFLYjRkM1IzbkFyY05LdVhWd1VcbnlpSVBxZkdYRmIwYVhSSFlwWkFzczlNdDRBeWV5SkZ2UEkzV3dieXp4UnZIRWxacFB4cnNQSDllZDZrbHhIbjJcbmJHK2tiK2kvbzJIcGRkbjdZWjZhbldhRk8rcW42K0U3bnJiaDk5Mll5SEJReEgxVGRiS20wVFAvbHEvR0E1VTlcbkVJRUdkeWt4ZHdLQmdCdzZ6aVZna3NDdnRiQm8rRFhnY3M0emQxcTF6K2JtLzhmaGhrZ2tFNWZTa0VwL0Y3M3NcblNyMXczbDNsNmtwRThsd2syeENZajhtZnZmYjVWNzBxOURmM05wTTIwMklyVEN1cmJsUEZ2R0kzRzNHdzQxVnBcbndoMW55LzF0SjBSNlB1WDkzcEorREdkQXhVenZTUWIzeElIWmZnbDljKzVwOWUwOEExK1A3bDExQW9HQkFOZVBcbitTQjN3TnpUK0lXeTcyaVlOcVNBRFNDd1IyQURMdVhYcCtiNFJPMk5ZNUJ6VUtCdVRvdmV0WitJRGhjb01iZGtcblRVRmlpbkxKenZHYmpISUJEUUNCZ0llTEpURUQvSDhWVG9odlJaRlF6b0JoZnFiOUU4ZjZuVUJrTnIrMEl2S0VcbndTRWNtL1puUjFDVEpobm10Q0k4MWg5dXp2Y0UwOVRYdTZnclhETE5Bb0dCQU1sRFZoY3pZSjNTN0xVdVZ3VWpcbm5MZXQ5N1UvTFU1VVd4YVMrbnp0c1FrSVBZNFQrejFqMnovZEo0cThPTG15NFVGQ0JxYTNKZ1JIK2xqYUhRdERcbi9hNVY5cDlpcnZYUzJudkFLQXIvTkpBeWdNdTNUMS9FYUs1MzhnZzNoUWVQSXJ0M3Rlc1VFMWpVWkhNQkdlQ05cbmhTQTRwZHIwZFAxd3Q1amFzR0haZWFXcVxuLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLVxuIiwKICAiY2xpZW50X2VtYWlsIjogImNhbXB1cy1ub3Rlcy1ib3RAbXlzdGljLWNyZWVrLTQyOTkwNS1nOS5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsCiAgImNsaWVudF9pZCI6ICIxMTA0ODMzNzA1MTcwMTM1NTYwODQiLAogICJhdXRoX3VyaSI6ICJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20vby9vYXV0aDIvYXV0aCIsCiAgInRva2VuX3VyaSI6ICJodHRwczovL29hdXRoMi5nb29nbGVhcGlzLmNvbS90b2tlbiIsCiAgImF1dGhfcHJvdmlkZXJfeDUwOV9jZXJ0X3VybCI6ICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9vYXV0aDIvdjEvY2VydHMiLAogICJjbGllbnRfeDUwOV9jZXJ0X3VybCI6ICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9yb2JvdC92MS9tZXRhZGF0YS94NTA5L2NhbXB1cy1ub3Rlcy1ib3QlNDBteXN0aWMtY3JlZWstNDI5OTA1LWc5LmlhbS5nc2VydmljZWFjY291bnQuY29tIiwKICAidW5pdmVyc2VfZG9tYWluIjogImdvb2dsZWFwaXMuY29tIgp9";
-const credentials = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+const MEGA_EMAIL = process.env.MEGA_EMAIL || '';
+const MEGA_PASSWORD = process.env.MEGA_PASSWORD || '';
 
-const auth = new google.auth.GoogleAuth({
-  credentials: {
-    client_email: credentials.client_email,
-    private_key: credentials.private_key,
-  },
-  scopes: ['https://www.googleapis.com/auth/drive.file'],
-});
+if (!MEGA_EMAIL || !MEGA_PASSWORD) {
+  console.error('Missing MEGA_EMAIL or MEGA_PASSWORD.');
+  process.exit(1);
+}
 
-const drive = google.drive({ version: 'v3', auth });
+async function getStorage() {
+  const storage = new mega.Storage({
+    email: MEGA_EMAIL,
+    password: MEGA_PASSWORD,
+    userAgent: 'CampusNotes/1.0'
+  });
+  await storage.ready;
+  return storage;
+}
+
+async function uploadToFolder(folder, name, buffer) {
+  const upload = folder.upload({ name, size: buffer.length }, buffer);
+  return new Promise((resolve, reject) => {
+    upload.on('complete', resolve);
+    upload.on('error', reject);
+  });
+}
 
 async function testUpload() {
-  const buffer = Buffer.from("Hello world, this is a test file!");
-  
-  const bufferStream = new stream.PassThrough();
-  bufferStream.end(buffer);
+  const buffer = Buffer.from('Hello world, this is a test file!');
+  const storage = await getStorage();
 
-  console.log("Starting upload...");
+  console.log('Starting upload to MEGA...');
   try {
-    const res = await drive.files.create({
-      resource: {
-        name: 'test.txt',
-        parents: ['1j29oZyFBrx_R2S4GleEuTqHEj92Am_57']
-      },
-      media: {
-        mimeType: 'text/plain',
-        body: bufferStream
-      },
-      fields: 'id, webViewLink, webContentLink',
+    const uploadedFile = await uploadToFolder(storage.root, 'test.txt', buffer);
+    uploadedFile.link((error, link) => {
+      if (error) {
+        console.error('Link error:', error.message);
+        return;
+      }
+      console.log('Uploaded successfully:', link);
     });
-    console.log("Uploaded successfully:", res.data);
   } catch (err) {
-    console.error("Upload failed:", err.message);
+    console.error('Upload failed:', err.message);
   }
 }
 testUpload();
