@@ -64,8 +64,9 @@ async function ensureFolder(parent, name) {
 }
 
 async function ensureFolderPath(root, parts) {
+  const safeParts = Array.isArray(parts) ? parts : [];
   let current = root;
-  for (const part of parts) {
+  for (const part of safeParts) {
     if (!part) continue;
     current = await ensureFolder(current, part);
   }
