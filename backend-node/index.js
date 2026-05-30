@@ -34,7 +34,14 @@ async function getStorage() {
 async function ensureFolderLoaded(folder) {
   if (typeof folder.loadAttributes === 'function') {
     await new Promise((resolve, reject) => {
-      folder.loadAttributes(error => (error ? reject(error) : resolve()));
+      folder.loadAttributes(error => {
+        if (!error) return resolve();
+        const message = String(error?.message || error);
+        if (message.includes('not needed for files loaded from logged in sessions')) {
+          return resolve();
+        }
+        return reject(error);
+      });
     });
     return;
   }
